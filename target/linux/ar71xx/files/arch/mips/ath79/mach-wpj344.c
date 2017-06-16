@@ -151,7 +151,7 @@ static void __init wpj344_setup(void)
 	ath79_register_mdio(1, 0x0);
 	ath79_register_mdio(0, 0x0);
 
-	ath79_init_mac(ath79_eth0_data.mac_addr, art + WPJ344_MAC0_OFFSET, 0);
+	ath79_init_mac(ath79_eth0_data.mac_addr, (u8 *) KSEG1ADDR(0x1f02e010), 0);
 	ath79_init_mac(ath79_eth1_data.mac_addr, art + WPJ344_MAC1_OFFSET, 0);
 
 	ath79_setup_ar934x_eth_cfg(AR934X_ETH_CFG_RGMII_GMAC0 |

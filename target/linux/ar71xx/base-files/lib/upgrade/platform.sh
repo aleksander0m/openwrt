@@ -187,7 +187,6 @@ platform_check_image() {
 	hornet-ub | \
 	mr12 | \
 	mr16 | \
-	wpj558 | \
 	zcn-1523h-2 | \
 	zcn-1523h-5)
 		[ "$magic_long" != "68737173" -a "$magic_long" != "19852003" ] && {
@@ -234,9 +233,7 @@ platform_check_image() {
 	rocket-m-xw | \
 	nanostation-m-xw | \
 	rw2458n | \
-	wpj531 | \
 	wndap360 | \
-	wpj344 | \
 	wzr-hp-g300nh2 | \
 	wzr-hp-g300nh | \
 	wzr-hp-g450h | \
@@ -253,6 +250,22 @@ platform_check_image() {
 	weio )
 		[ "$magic" != "2705" ] && {
 			echo "Invalid image type."
+			return 1
+		}
+		return 0
+		;;
+
+	wpj344 | \
+	wpj531 | \
+	wpj558 )
+		[ "$magic" != "2705" -a "$magic_long" != "68737173" ] && {
+			echo "Invalid image type."
+			return 1
+		}
+		local hw_magic
+		hw_magic="$(ar71xx_get_mtd_part_magic firmware)"
+		[ "$magic_long" != "$hw_magic" ] && {
+			echo "Invalid image, hardware ID mismatch, hw:$hw_magic image:$magic_long."
 			return 1
 		}
 		return 0

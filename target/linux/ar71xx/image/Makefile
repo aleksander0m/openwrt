@@ -1047,6 +1047,9 @@ uap_pro_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,1536k(kernel)
 ubdev_mtdlayout=mtdparts=spi0.0:256k(u-boot)ro,64k(u-boot-env)ro,7488k(firmware),64k(certs),256k(cfg)ro,64k(EEPROM)ro
 whrhpg300n_mtdlayout=mtdparts=spi0.0:248k(u-boot)ro,8k(u-boot-env)ro,3712k(firmware),64k(art)ro
 wlr8100_mtdlayout=mtdparts=spi0.0:192k(u-boot)ro,64k(u-boot-env)ro,1408k(kernel),14080k(rootfs),192k(unknown)ro,64k(art)ro,384k(unknown2)ro,15488k@0x40000(firmware)
+wpj344_mtdlayout_8M=mtdparts=spi0.0:192k(u-boot)ro,6464k(rootfs),1472k(kernel),64k(art)ro,7936k@0x30000(firmware)
+wpj531_mtdlayout_8M=mtdparts=spi0.0:192k(u-boot)ro,6464k(rootfs),1472k(kernel),64k(art)ro,7936k@0x30000(firmware)
+wpj558_mtdlayout_8M=mtdparts=spi0.0:192k(u-boot)ro,6464k(rootfs),1472k(kernel),64k(art)ro,7936k@0x30000(firmware)
 wpj344_mtdlayout_16M=mtdparts=spi0.0:192k(u-boot)ro,16128k(firmware),64k(art)ro
 wpj531_mtdlayout_16M=mtdparts=spi0.0:192k(u-boot)ro,16128k(firmware),64k(art)ro
 wpj558_mtdlayout_16M=mtdparts=spi0.0:192k(u-boot)ro,16128k(firmware),64k(art)ro
@@ -1279,6 +1282,26 @@ Image/Build/AthLzma/buildkernel=$(call MkuImageLzma,$(2),$(3) $(4))
 Image/Build/AthLzma=$(call Image/Build/Ath,$(1),$(2),$(3),$(4),$(5),$(6),$(7))
 Image/Build/AthLzma/initramfs=$(call MkuImageLzma/initramfs,$(2),$(3) $(4))
 
+Image/Build/CpxAthLzma/buildkernel=$(call MkuImageLzma,$(2),$(3) $(4))
+Image/Build/CpxAthLzma/initramfs=$(call MkuImageLzma/initramfs,$(2),$(3) $(4))
+
+define Image/Build/CpxAthLzma
+	$(call Image/Build/Ath,$(1),$(2),$(3),$(4),$(5),$(6))
+	$(eval fsize=$(if $(findstring -16M,$(2)),0x1000000,0x800000))
+	$(eval fwsysup=$(call sysupname,$(1),$(2)))
+	$(eval fwsize=$(call mtdpartsize,firmware,$(4)))
+	$(eval rootsize=$(call mtdpartsize,rootfs,$(4)))
+	$(eval kernsize=$(call mtdpartsize,kernel,$(4)))
+
+	$(STAGING_DIR_HOST)/bin/mkmylofw -B WPE72 -i 0x11f6:$(7):0x11f6:$(7) -r 2 -s $(fsize) \
+		-p0x00030000:$(fwsize):al:0x80060000:"firmware":$(fwsysup) \
+		$(call imgname,$(1),$(2))-factory.img
+
+	$(eval bdname=$(shell bn=`echo -n '$(2)' | sed -e 's/-16M/a-16M/' -e 's/-8M/a-8M/'`; [ -n "$$bn" ] && echo $$bn))
+	$(STAGING_DIR_HOST)/bin/mkmylofw -B WPE72 -i 0x11f6:$(8):0x11f6:$(8) -r 3 -s $(fsize) \
+		-p0x00030000:$(fwsize):al:0x80060000:"firmware":$(fwsysup) \
+		$(call imgname,$(1),$(bdname))-factory.img
+endef
 
 Image/Build/Belkin/buildkernel=$(call MkuImageLzma,$(2),$(3) $(4))
 Image/Build/Belkin/initramfs=$(call MkuImageLzma/initramfs,$(2),$(3) $(4))
@@ -1945,9 +1968,13 @@ $(eval $(call SingleProfile,AthLzma,64k,MR16,mr16,MR16,ttyS0,115200,$$(mr16_mtdl
 $(eval $(call SingleProfile,AthLzma,64k,PB92,pb92,PB92,ttyS0,115200,$$(pb92_mtdlayout),KRuImage))
 $(eval $(call SingleProfile,AthLzma,64k,TUBE2H16M,tube2h-16M,TUBE2H,ttyATH0,115200,$$(alfa_mtdlayout_16M),KRuImage,65536))
 $(eval $(call SingleProfile,AthLzma,64k,WLR8100,wlr8100,WLR8100,ttyS0,115200,$$(wlr8100_mtdlayout),KRuImage))
-$(eval $(call SingleProfile,AthLzma,64k,WPJ344_16M,wpj344-16M,WPJ344,ttyS0,115200,$$(wpj344_mtdlayout_16M),KRuImage,65536))
-$(eval $(call SingleProfile,AthLzma,64k,WPJ531_16M,wpj531-16M,WPJ531,ttyS0,115200,$$(wpj531_mtdlayout_16M),KRuImage,65536))
-$(eval $(call SingleProfile,AthLzma,64k,WPJ558_16M,wpj558-16M,WPJ558,ttyS0,115200,$$(wpj558_mtdlayout_16M),KRuImage,65536))
+
+$(eval $(call SingleProfile,CpxAthLzma,64k,WPJ344_8M,wpj344-8M,WPJ344,ttyS0,115200,$$(wpj344_mtdlayout_8M),RKuImage,,0x687,0x690))
+$(eval $(call SingleProfile,CpxAthLzma,64k,WPJ531_8M,wpj531-8M,WPJ531,ttyS0,115200,$$(wpj531_mtdlayout_8M),RKuImage,,0x68A,0x693))
+$(eval $(call SingleProfile,CpxAthLzma,64k,WPJ558_8M,wpj558-8M,WPJ558,ttyS0,115200,$$(wpj558_mtdlayout_8M),RKuImage,,0x688,0x691))
+$(eval $(call SingleProfile,CpxAthLzma,64k,WPJ344_16M,wpj344-16M,WPJ344,ttyS0,115200,$$(wpj344_mtdlayout_16M),KRuImage,65536,0x687,0x690))
+$(eval $(call SingleProfile,CpxAthLzma,64k,WPJ531_16M,wpj531-16M,WPJ531,ttyS0,115200,$$(wpj531_mtdlayout_16M),KRuImage,65536,0x68A,0x693))
+$(eval $(call SingleProfile,CpxAthLzma,64k,WPJ558_16M,wpj558-16M,WPJ558,ttyS0,115200,$$(wpj558_mtdlayout_16M),KRuImage,65536,0x688,0x691))
 
 $(eval $(call SingleProfile,Belkin,64k,F9K1115V2,f9k1115v2,F9K1115V2,ttyS0,115200,$$(f9k1115v2_mtdlayout),BR-6679BAC))
 
@@ -2138,9 +2165,9 @@ $(eval $(call MultiProfile,WNR612V2,REALWNR612V2 N150R))
 $(eval $(call MultiProfile,WNR1000V2,REALWNR1000V2 WNR1000V2_VC))
 $(eval $(call MultiProfile,WP543,WP543_2M WP543_4M WP543_8M WP543_16M))
 $(eval $(call MultiProfile,WPE72,WPE72_4M WPE72_8M WPE72_16M))
-$(eval $(call MultiProfile,WPJ344,WPJ344_16M))
-$(eval $(call MultiProfile,WPJ531,WPJ531_16M))
-$(eval $(call MultiProfile,WPJ558,WPJ558_16M))
+$(eval $(call MultiProfile,WPJ344,WPJ344_8M WPJ344_16M))
+$(eval $(call MultiProfile,WPJ531,WPJ531_8M WPJ531_16M))
+$(eval $(call MultiProfile,WPJ558,WPJ558_8M WPJ558_16M))
 
 $(eval $(call MultiProfile,Minimal,$(SINGLE_PROFILES)))
 $(eval $(call MultiProfile,Madwifi,EAP7660D UBNTRS UBNTRSPRO UBNTLSSR71 WP543))

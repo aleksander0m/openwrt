@@ -153,7 +153,7 @@ proto_ncm_setup() {
 		json_add_string name "${interface}_4"
 		json_add_string ifname "@$interface"
 		json_add_string proto "dhcp"
-		proto_add_dynamic_defaults
+		proto_add_dynamic_defaultso
 		[ -n "$zone" ] && {
 			json_add_string zone "$zone"
 		}
